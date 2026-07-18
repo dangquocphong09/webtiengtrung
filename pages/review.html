@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ôn tập - Từ Vựng Tiếng Trung</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__inner">
+        <a href="../index.html" class="header__title">Từ Vựng Tiếng Trung</a>
+      <nav class="header__nav">
+        <a href="../index.html">Trang chủ</a>
+        <a href="add-word.html">Thêm từ</a>
+        <a href="vocabulary.html">Kho từ</a>
+        <a href="review.html" class="active">Ôn tập</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Chọn chế độ ôn -->
+    <div id="mode-select" class="card">
+      <h2 style="margin-bottom: var(--space-lg); font-size: 1.125rem;">Chọn chế độ ôn tập</h2>
+      <div class="actions">
+        <button class="btn btn--primary btn--lg btn--block" onclick="ReviewApp.start('daily')">
+          Ôn tập hôm nay <span id="due-badge" class="level-badge" style="margin-left: 8px;"></span>
+        </button>
+        <button class="btn btn--outline btn--lg btn--block" onclick="ReviewApp.start('random')">
+          Ôn ngẫu nhiên
+        </button>
+      </div>
+
+      <!-- Ôn theo danh mục -->
+      <div id="category-section" style="display: none; margin-top: var(--space-lg);">
+        <label class="form-label">Chọn danh mục:</label>
+        <select class="form-input" id="category-select" style="margin-bottom: var(--space-sm);">
+          <option value="">-- Chọn danh mục --</option>
+        </select>
+        <button class="btn btn--primary btn--lg btn--block" id="btn-start-category"
+                onclick="ReviewApp.start('category', document.getElementById('category-select').value)">
+          Ôn theo danh mục
+        </button>
+      </div>
+    </div>
+
+    <!-- Flashcard area -->
+    <div id="review-area" style="display: none;">
+
+      <!-- Progress -->
+      <div class="progress">
+        <div class="progress__text">
+          <span id="progress-label">1 / 10</span>
+          <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress__bar">
+          <div class="progress__fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Flashcard -->
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard__hanzi" id="card-hanzi"></div>
+
+        <!-- Input area -->
+        <div class="flashcard__inputs" id="input-area">
+          <input class="flashcard__input" type="text" id="input-pinyin"
+                 placeholder="Pinyin" autocomplete="off" spellcheck="false">
+          <input class="flashcard__input" type="text" id="input-meaning"
+                 placeholder="Nghĩa" autocomplete="off">
+          <button class="btn btn--primary btn--block" id="check-btn" onclick="ReviewApp.checkAnswer()">
+            Kiểm tra
+          </button>
+        </div>
+
+        <!-- Đáp án + kết quả -->
+        <div id="card-answer" style="display: none; text-align: center; width: 100%;">
+          <div id="result-pinyin" class="result-label"></div>
+          <div class="flashcard__pinyin" id="card-pinyin"></div>
+          <div id="result-meaning" class="result-label" style="margin-top: 8px;"></div>
+          <div class="flashcard__meaning" id="card-meaning"></div>
+          <div class="flashcard__example" id="card-example" style="margin-top: 10px;"></div>
+        </div>
+      </div>
+
+      <!-- Nút đã nhớ / chưa nhớ -->
+      <div class="review-actions" id="review-actions" style="display: none;">
+        <button class="btn btn--success btn--lg" onclick="ReviewApp.markWord(true)">
+          Đã nhớ
+        </button>
+        <button class="btn btn--danger btn--lg" onclick="ReviewApp.markWord(false)">
+          Chưa nhớ
+        </button>
+      </div>
+    </div>
+
+    <!-- Thống kê cuối phiên -->
+    <div id="review-done" style="display: none;">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: var(--space-md);">&#127881;</div>
+        <h2 style="margin-bottom: var(--space-lg);">Hoàn thành!</h2>
+
+        <div class="stats" style="margin-bottom: var(--space-lg);">
+          <div class="stat-card">
+            <div class="stat-card__number" id="stat-total">0</div>
+            <div class="stat-card__label">Tổng số từ</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__number" id="stat-percent">0%</div>
+            <div class="stat-card__label">Tỷ lệ đúng</div>
+          </div>
+          <div class="stat-card" style="color: var(--success);">
+            <div class="stat-card__number" id="stat-correct" style="color: var(--success);">0</div>
+            <div class="stat-card__label">Đã nhớ</div>
+          </div>
+          <div class="stat-card" style="color: var(--danger);">
+            <div class="stat-card__number" id="stat-wrong" style="color: var(--danger);">0</div>
+            <div class="stat-card__label">Chưa nhớ</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--danger btn--lg btn--block" id="btn-retry"
+                  onclick="ReviewApp.retryWrong()" style="display: none;">
+            Ôn lại từ sai
+          </button>
+          <button class="btn btn--outline btn--lg btn--block" onclick="ReviewApp.goHome()">
+            Quay về trang chủ
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toast-container"></div>
+  <div id="loading" class="loading"><div class="loading__spinner"></div></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/reviewService.js"></script>
+  <script src="../js/review.js"></script>
+  <script>
+    // ── Khởi tạo: đếm từ cần ôn + tải danh mục ──
+    async function initPage() {
+      try {
+        var [reviewRes, catRes] = await Promise.all([
+          API.getReviewWords(),
+          API.getCategories(),
+        ]);
+
+        var dueCount = (reviewRes.words || []).length;
+        var badge = document.getElementById('due-badge');
+        if (dueCount > 0) badge.textContent = dueCount;
+
+        var categories = catRes.categories || [];
+        if (categories.length > 0) {
+          document.getElementById('category-section').style.display = 'block';
+          var select = document.getElementById('category-select');
+          categories.forEach(function(cat) {
+            var opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            select.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    initPage();
+  </script>
+
+</body>
+</html>

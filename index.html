@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Từ Vựng Tiếng Trung</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__inner">
+      <a href="index.html" class="header__title">Từ Vựng Tiếng Trung</a>
+      <nav class="header__nav">
+        <a href="index.html" class="active">Trang chủ</a>
+        <a href="pages/add-word.html">Thêm từ</a>
+        <a href="pages/vocabulary.html">Kho từ</a>
+        <a href="pages/review.html">Ôn tập</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <div class="stat-card__number" id="due-count">-</div>
+        <div class="stat-card__label">Cần ôn hôm nay</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__number" id="total-count">-</div>
+        <div class="stat-card__label">Tổng số từ</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="pages/review.html" class="btn btn--primary btn--lg btn--block" id="btn-review">
+        Bắt đầu ôn
+      </a>
+      <a href="pages/add-word.html" class="btn btn--outline btn--lg btn--block">
+        Thêm từ mới
+      </a>
+      <a href="pages/vocabulary.html" class="btn btn--outline btn--lg btn--block">
+        Kho từ vựng
+      </a>
+    </div>
+
+  </main>
+
+  <div id="toast-container"></div>
+  <div id="loading" class="loading">
+    <div class="loading__spinner"></div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    async function initDashboard() {
+      showLoading();
+      try {
+        var [wordsRes, reviewRes] = await Promise.all([
+          API.getWords(),
+          API.getReviewWords(),
+        ]);
+
+        var totalWords = wordsRes.words ? wordsRes.words.length : 0;
+        var dueWords = reviewRes.words ? reviewRes.words.length : 0;
+
+        document.getElementById('total-count').textContent = totalWords;
+        document.getElementById('due-count').textContent = dueWords;
+
+        if (dueWords === 0) {
+          var btnReview = document.getElementById('btn-review');
+          btnReview.style.opacity = '0.5';
+          btnReview.title = 'Không có từ cần ôn hôm nay';
+        }
+      } catch (err) {
+        showToast('Không thể tải dữ liệu', 'error');
+        console.error(err);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    initDashboard();
+  </script>
+
+</body>
+</html>

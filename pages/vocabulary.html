@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kho từ vựng - Từ Vựng Tiếng Trung</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__inner">
+        <a href="../index.html" class="header__title">Từ Vựng Tiếng Trung</a>
+      <nav class="header__nav">
+        <a href="../index.html">Trang chủ</a>
+        <a href="add-word.html">Thêm từ</a>
+        <a href="vocabulary.html" class="active">Kho từ</a>
+        <a href="review.html">Ôn tập</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Filter + Search -->
+    <div class="filter-bar">
+      <select class="form-input filter-bar__select" id="category-filter">
+        <option value="">Tất cả danh mục</option>
+      </select>
+      <div class="search-bar" style="margin-bottom: 0; flex: 1;">
+        <span class="search-bar__icon">&#128269;</span>
+        <input class="search-bar__input" type="text" id="search-input"
+               placeholder="Tìm theo Hanzi, Pinyin hoặc nghĩa...">
+      </div>
+    </div>
+
+    <!-- Danh sách từ -->
+    <div class="word-list" id="word-list"></div>
+
+  </main>
+
+  <!-- Modal chỉnh sửa -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">Chỉnh sửa từ</h3>
+        <button class="modal__close" id="modal-close">&times;</button>
+      </div>
+      <form id="edit-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+          <label class="form-label" for="edit-hanzi">Hanzi</label>
+          <input class="form-input" type="text" id="edit-hanzi" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-pinyin">Pinyin</label>
+          <input class="form-input" type="text" id="edit-pinyin" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-meaning">Nghĩa</label>
+          <input class="form-input" type="text" id="edit-meaning" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-category">Danh mục</label>
+          <input class="form-input" type="text" id="edit-category">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-example">Ví dụ (Hanzi)</label>
+          <input class="form-input" type="text" id="edit-example">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-examplePinyin">Pinyin ví dụ</label>
+          <input class="form-input" type="text" id="edit-examplePinyin">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-exampleMeaning">Dịch ví dụ</label>
+          <input class="form-input" type="text" id="edit-exampleMeaning">
+        </div>
+        <button type="submit" class="btn btn--primary btn--block">Lưu thay đổi</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <div id="loading" class="loading"><div class="loading__spinner"></div></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    /**
+     * Vocabulary - Kho từ vựng
+     * Hiển thị chi tiết, tìm kiếm, chỉnh sửa, xóa, favorite, filter category
+     */
+    var allWords = [];
+    var allCategories = [];
+
+    async function loadWords() {
+      showLoading();
+      try {
+        var res = await API.getWords();
+        allWords = res.words || [];
+        buildCategories();
+        renderWords(allWords);
+      } catch (err) {
+        showToast('Không thể tải danh sách từ', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function buildCategories() {
+      var cats = {};
+      allWords.forEach(function(w) {
+        if (w.category) cats[w.category] = true;
+      });
+      allCategories = Object.keys(cats).sort();
+
+      var select = document.getElementById('category-filter');
+      // Xóa options cũ (giữ option "Tất cả")
+      while (select.options.length > 1) select.remove(1);
+      allCategories.forEach(function(cat) {
+        var opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    function getFilteredWords() {
+      var query = document.getElementById('search-input').value.toLowerCase().trim();
+      var catFilter = document.getElementById('category-filter').value;
+
+      return allWords.filter(function(w) {
+        // Filter category
+        if (catFilter && w.category !== catFilter) return false;
+        // Search
+        if (!query) return true;
+        return (w.hanzi && w.hanzi.toLowerCase().indexOf(query) !== -1) ||
+               (w.pinyin && w.pinyin.toLowerCase().indexOf(query) !== -1) ||
+               (w.meaning && w.meaning.toLowerCase().indexOf(query) !== -1);
+      });
+    }
+
+    function renderWords(words) {
+      var container = document.getElementById('word-list');
+
+      if (words.length === 0) {
+        container.innerHTML =
+          '<div class="empty-state">' +
+          '<div class="empty-state__icon">&#128218;</div>' +
+          '<div class="empty-state__text">Chưa có từ vựng nào</div>' +
+          '</div>';
+        return;
+      }
+
+      container.innerHTML = words.map(function(w) {
+        var meanings = (w.meaning || '').split('|').map(function(s) { return s.trim(); }).filter(Boolean);
+        var meaningDisplay = meanings.join(' | ');
+
+        var exampleHtml = '';
+        if (w.example) {
+          var parts = [];
+          parts.push('<span class="word-detail__example-hanzi">' + w.example + '</span>');
+          if (w.examplePinyin) parts.push('<span class="word-detail__example-pinyin">' + w.examplePinyin + '</span>');
+          if (w.exampleMeaning) parts.push('<span class="word-detail__example-meaning">' + w.exampleMeaning + '</span>');
+          exampleHtml = '<div class="word-detail__example">' + parts.join('') + '</div>';
+        }
+
+        var categoryHtml = w.category
+          ? '<span class="category-badge">' + w.category + '</span>'
+          : '';
+
+        var levelText = (w.level || 0) > 0 ? '<span class="level-badge">Lv.' + w.level + '</span>' : '';
+
+        return '' +
+          '<div class="word-item word-item--detail" data-id="' + w.id + '">' +
+            '<div class="word-item__row">' +
+              '<button class="star-btn ' + (w.favorite ? 'star-btn--active' : 'star-btn--inactive') + '" ' +
+                'onclick="toggleFavorite(\'' + w.id + '\', ' + (!w.favorite) + ')" title="Favorite">&#9733;</button>' +
+              '<div class="word-item__hanzi">' + w.hanzi + '</div>' +
+              '<div class="word-item__info">' +
+                '<div class="word-item__pinyin">' + w.pinyin + '</div>' +
+                '<div class="word-item__meaning">' + meaningDisplay + '</div>' +
+              '</div>' +
+              '<div class="word-item__actions">' +
+                '<button class="btn btn--ghost btn--sm" onclick="openEdit(\'' + w.id + '\')" title="Sửa">&#9998;</button>' +
+                '<button class="btn btn--ghost btn--sm" onclick="deleteWord(\'' + w.id + '\')" title="Xóa">&#10005;</button>' +
+              '</div>' +
+            '</div>' +
+            (exampleHtml || categoryHtml || levelText
+              ? '<div class="word-item__detail">' +
+                  exampleHtml +
+                  '<div class="word-item__meta">' + categoryHtml + levelText + '</div>' +
+                '</div>'
+              : '') +
+          '</div>';
+      }).join('');
+    }
+
+    // ── Search + Filter ──
+    document.getElementById('search-input').addEventListener('input', function() {
+      renderWords(getFilteredWords());
+    });
+    document.getElementById('category-filter').addEventListener('change', function() {
+      renderWords(getFilteredWords());
+    });
+
+    // ── Favorite ──
+    async function toggleFavorite(id, newState) {
+      try {
+        await API.toggleFavorite(id, newState);
+        var word = allWords.find(function(w) { return w.id === id; });
+        if (word) word.favorite = newState;
+        renderWords(getFilteredWords());
+        showToast(newState ? 'Đã thêm yêu thích' : 'Bỏ yêu thích', 'info');
+      } catch (err) {
+        showToast('Lỗi cập nhật', 'error');
+      }
+    }
+
+    // ── Edit Modal ──
+    function openEdit(id) {
+      var word = allWords.find(function(w) { return w.id === id; });
+      if (!word) return;
+
+      document.getElementById('edit-id').value = word.id;
+      document.getElementById('edit-hanzi').value = word.hanzi || '';
+      document.getElementById('edit-pinyin').value = word.pinyin || '';
+      document.getElementById('edit-meaning').value = word.meaning || '';
+      document.getElementById('edit-category').value = word.category || '';
+      document.getElementById('edit-example').value = word.example || '';
+      document.getElementById('edit-examplePinyin').value = word.examplePinyin || '';
+      document.getElementById('edit-exampleMeaning').value = word.exampleMeaning || '';
+
+      document.getElementById('edit-modal').classList.add('modal-overlay--visible');
+    }
+
+    document.getElementById('modal-close').addEventListener('click', function() {
+      document.getElementById('edit-modal').classList.remove('modal-overlay--visible');
+    });
+
+    document.getElementById('edit-modal').addEventListener('click', function(e) {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.remove('modal-overlay--visible');
+      }
+    });
+
+    document.getElementById('edit-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var word = {
+        id: document.getElementById('edit-id').value,
+        hanzi: document.getElementById('edit-hanzi').value.trim(),
+        pinyin: document.getElementById('edit-pinyin').value.trim(),
+        meaning: document.getElementById('edit-meaning').value.trim(),
+        category: document.getElementById('edit-category').value.trim(),
+        example: document.getElementById('edit-example').value.trim(),
+        examplePinyin: document.getElementById('edit-examplePinyin').value.trim(),
+        exampleMeaning: document.getElementById('edit-exampleMeaning').value.trim(),
+      };
+
+      showLoading();
+      try {
+        await API.updateWord(word);
+        var idx = allWords.findIndex(function(w) { return w.id === word.id; });
+        if (idx !== -1) allWords[idx] = Object.assign({}, allWords[idx], word);
+
+        document.getElementById('edit-modal').classList.remove('modal-overlay--visible');
+        buildCategories();
+        renderWords(getFilteredWords());
+        showToast('Đã cập nhật!', 'success');
+      } catch (err) {
+        showToast('Lỗi cập nhật', 'error');
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // ── Delete ──
+    async function deleteWord(id) {
+      if (!confirmDialog('Xóa từ này?')) return;
+
+      showLoading();
+      try {
+        await API.deleteWord(id);
+        allWords = allWords.filter(function(w) { return w.id !== id; });
+        buildCategories();
+        renderWords(getFilteredWords());
+        showToast('Đã xóa', 'success');
+      } catch (err) {
+        showToast('Lỗi xóa', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    loadWords();
+  </script>
+
+</body>
+</html>

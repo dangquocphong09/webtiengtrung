@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thêm từ mới - Từ Vựng Tiếng Trung</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__inner">
+        <a href="../index.html" class="header__title">Từ Vựng Tiếng Trung</a>
+      <nav class="header__nav">
+        <a href="../index.html">Trang chủ</a>
+        <a href="add-word.html" class="active">Thêm từ</a>
+        <a href="vocabulary.html">Kho từ</a>
+        <a href="review.html">Ôn tập</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h2 style="margin-bottom: var(--space-lg); font-size: 1.125rem;">Thêm từ mới</h2>
+
+      <form id="add-form" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="hanzi">Hanzi *</label>
+          <input class="form-input" type="text" id="hanzi" placeholder="Ví dụ: 你好" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pinyin">Pinyin *</label>
+          <input class="form-input" type="text" id="pinyin" placeholder="Ví dụ: nǐ hǎo" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="meaning">Nghĩa * <span style="font-weight:400;color:var(--text-secondary);">(nhiều nghĩa cách nhau bằng |)</span></label>
+          <input class="form-input" type="text" id="meaning" placeholder="Ví dụ: Xin chào|Chào bạn" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="category">Danh mục</label>
+          <input class="form-input" type="text" id="category" placeholder="Ví dụ: Gia đình, Cơ bản" list="category-list">
+          <datalist id="category-list"></datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="example">Ví dụ (Hanzi)</label>
+          <input class="form-input" type="text" id="example" placeholder="Ví dụ: 你好吗？">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="examplePinyin">Pinyin ví dụ</label>
+          <input class="form-input" type="text" id="examplePinyin" placeholder="Ví dụ: nǐ hǎo ma？">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="exampleMeaning">Dịch ví dụ</label>
+          <input class="form-input" type="text" id="exampleMeaning" placeholder="Ví dụ: Bạn khỏe không?">
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--block btn--lg" id="submit-btn">
+          Lưu từ mới
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <div id="toast-container"></div>
+  <div id="loading" class="loading"><div class="loading__spinner"></div></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    /**
+     * Add Word - Thêm từ mới
+     */
+    var form = document.getElementById('add-form');
+
+    // Tải danh sách category có sẵn để gợi ý
+    async function loadCategories() {
+      try {
+        var res = await API.getCategories();
+        var cats = res.categories || [];
+        var datalist = document.getElementById('category-list');
+        cats.forEach(function(cat) {
+          var opt = document.createElement('option');
+          opt.value = cat;
+          datalist.appendChild(opt);
+        });
+      } catch (err) {
+        // Không crash nếu load category fail
+      }
+    }
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      var word = {
+        hanzi: document.getElementById('hanzi').value.trim(),
+        pinyin: document.getElementById('pinyin').value.trim(),
+        meaning: document.getElementById('meaning').value.trim(),
+        category: document.getElementById('category').value.trim(),
+        example: document.getElementById('example').value.trim(),
+        examplePinyin: document.getElementById('examplePinyin').value.trim(),
+        exampleMeaning: document.getElementById('exampleMeaning').value.trim(),
+      };
+
+      if (!word.hanzi || !word.pinyin || !word.meaning) {
+        showToast('Vui lòng nhập Hanzi, Pinyin và Nghĩa', 'error');
+        return;
+      }
+
+      var submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      showLoading();
+
+      try {
+        await API.createWord(word);
+        showToast('Đã thêm từ mới!', 'success');
+        form.reset();
+        document.getElementById('hanzi').focus();
+        // Reload categories để có category vừa thêm
+        loadCategories();
+      } catch (err) {
+        showToast('Lỗi khi lưu: ' + err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        hideLoading();
+      }
+    });
+
+    loadCategories();
+  </script>
+
+</body>
+</html>
