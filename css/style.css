@@ -334,6 +334,28 @@ textarea.form-input {
   color: var(--border);
 }
 
+/* ── Speaker Button ── */
+
+.speaker-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 2px 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s, transform 0.1s;
+  vertical-align: middle;
+}
+
+.speaker-btn:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.speaker-btn:active {
+  transform: scale(0.95);
+}
+
 /* ── Flashcard ── */
 
 .flashcard {

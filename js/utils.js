@@ -127,3 +127,34 @@ function throttle(fn, delay) {
 function confirmDialog(message) {
   return window.confirm(message);
 }
+
+// ── Text-to-Speech ──
+
+/**
+ * Đọc text bằng Web Speech API
+ * @param {string} text - Text cần đọc
+ * @param {string} lang - Mã ngôn ngữ (mặc định: zh-CN)
+ */
+function speak(text, lang) {
+  if (!text) return;
+  if (!('speechSynthesis' in window)) {
+    showToast('Trình duyệt không hỗ trợ đọc', 'error');
+    return;
+  }
+  // Dừng đọc trước đó nếu có
+  speechSynthesis.cancel();
+
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = lang || 'zh-CN';
+  u.rate = 0.8;
+  u.pitch = 1;
+  speechSynthesis.speak(u);
+}
+
+/**
+ * HTML nút loa — gọi speak khi click
+ */
+function speakerBtn(text, lang) {
+  return '<button class="speaker-btn" onclick="speak(\'' +
+    text.replace(/'/g, "\\'") + '\', \'' + (lang || 'zh-CN') + '\')" title="Nghe phát âm">&#128264;</button>';
+}

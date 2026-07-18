@@ -63,8 +63,9 @@ const ReviewApp = {
     // Animation: fade out → đổi nội dung → fade in
     card.classList.add('flashcard--exit');
     setTimeout(function() {
-      // Hanzi
-      document.getElementById('card-hanzi').textContent = word.hanzi;
+      // Hanzi + nút loa
+      document.getElementById('card-hanzi').innerHTML =
+        word.hanzi + ' ' + speakerBtn(word.hanzi);
 
       // Reset input
       var inputPinyin = document.getElementById('input-pinyin');
@@ -130,14 +131,21 @@ const ReviewApp = {
       'result-label ' + (meaningOk ? 'result-label--correct' : 'result-label--wrong');
 
     // Đáp án đầy đủ
-    document.getElementById('card-pinyin').textContent = word.pinyin;
+    document.getElementById('card-pinyin').innerHTML = word.pinyin;
     document.getElementById('card-meaning').textContent = ReviewService.parseMeanings(word.meaning).join(' | ');
 
-    var exampleParts = [];
-    if (word.example) exampleParts.push(word.example);
-    if (word.examplePinyin) exampleParts.push(word.examplePinyin);
-    if (word.exampleMeaning) exampleParts.push(word.exampleMeaning);
-    document.getElementById('card-example').textContent = exampleParts.join(' — ');
+    var exampleHtml = '';
+    if (word.example) {
+      exampleHtml = '<span class="word-detail__example-hanzi">' + word.example + '</span> '
+        + speakerBtn(word.example);
+      if (word.examplePinyin) {
+        exampleHtml += '<span class="word-detail__example-pinyin">' + word.examplePinyin + '</span>';
+      }
+      if (word.exampleMeaning) {
+        exampleHtml += '<span class="word-detail__example-meaning">' + word.exampleMeaning + '</span>';
+      }
+    }
+    document.getElementById('card-example').innerHTML = exampleHtml;
 
     // Chuyển sang hiển thị đáp án + nút đánh dấu
     document.getElementById('input-area').style.display = 'none';
