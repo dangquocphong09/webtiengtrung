@@ -7,7 +7,8 @@ const WritingApp = {
   words: [],
   currentIndex: 0,
   practiceCount: 0,
-  answerHidden: false,
+  hanziHidden: true,
+  pinyinHidden: true,
   signaturePad: null,
 
   // ── Bắt đầu phiên luyện viết ──
@@ -39,7 +40,8 @@ const WritingApp = {
       this.words = words;
       this.currentIndex = 0;
       this.practiceCount = 0;
-      this.answerHidden = false;
+      this.hanziHidden = true;
+      this.pinyinHidden = true;
 
       // Ẩn mode select, hiện writing area
       document.getElementById('mode-select').style.display = 'none';
@@ -134,10 +136,13 @@ const WritingApp = {
     document.getElementById('word-pinyin').textContent = word.pinyin;
     document.getElementById('word-meaning').textContent = word.meaning;
 
-    // Reset state
-    this.answerHidden = false;
-    document.getElementById('reference-hanzi').style.visibility = 'visible';
-    document.getElementById('btn-toggle-hanzi').textContent = 'Ẩn đáp án';
+    // Reset state - mặc định ẩn cả hanzi và pinyin
+    this.hanziHidden = true;
+    this.pinyinHidden = true;
+    document.getElementById('reference-hanzi').style.visibility = 'hidden';
+    document.getElementById('word-pinyin').style.visibility = 'hidden';
+    document.getElementById('btn-toggle-hanzi').textContent = 'Xem hanzi';
+    document.getElementById('btn-toggle-pinyin').textContent = 'Xem pinyin';
 
     this.clearCanvas();
     this.updateProgress();
@@ -185,20 +190,37 @@ const WritingApp = {
     return counts[wordId];
   },
 
-  // ── Ẩn/hiện đáp án ──
+  // ── Ẩn/hiện hanzi ──
 
-  toggleAnswer() {
+  toggleHanzi() {
     var el = document.getElementById('reference-hanzi');
     var btn = document.getElementById('btn-toggle-hanzi');
 
-    this.answerHidden = !this.answerHidden;
+    this.hanziHidden = !this.hanziHidden;
 
-    if (this.answerHidden) {
+    if (this.hanziHidden) {
       el.style.visibility = 'hidden';
-      btn.textContent = 'Xem đáp án';
+      btn.textContent = 'Xem hanzi';
     } else {
       el.style.visibility = 'visible';
-      btn.textContent = 'Ẩn đáp án';
+      btn.textContent = 'Ẩn hanzi';
+    }
+  },
+
+  // ── Ẩn/hiện pinyin ──
+
+  togglePinyin() {
+    var el = document.getElementById('word-pinyin');
+    var btn = document.getElementById('btn-toggle-pinyin');
+
+    this.pinyinHidden = !this.pinyinHidden;
+
+    if (this.pinyinHidden) {
+      el.style.visibility = 'hidden';
+      btn.textContent = 'Xem pinyin';
+    } else {
+      el.style.visibility = 'visible';
+      btn.textContent = 'Ẩn pinyin';
     }
   },
 

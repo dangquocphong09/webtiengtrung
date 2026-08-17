@@ -67,12 +67,15 @@
         <div class="writing__reference">
           <div class="writing__reference-hanzi" id="reference-hanzi"></div>
           <div id="reference-toggle">
-            <button class="btn btn--outline btn--sm" id="btn-toggle-hanzi" onclick="WritingApp.toggleAnswer()">
-              Ẩn đáp án
+            <button class="btn btn--outline btn--sm" id="btn-toggle-hanzi" onclick="WritingApp.toggleHanzi()">
+              Xem hanzi
             </button>
           </div>
         </div>
-        <div class="flashcard__pinyin" id="word-pinyin"></div>
+        <div class="flashcard__pinyin" id="word-pinyin" style="visibility: hidden;"></div>
+        <button class="btn btn--outline btn--sm" id="btn-toggle-pinyin" onclick="WritingApp.togglePinyin()">
+          Xem pinyin
+        </button>
         <div class="flashcard__meaning" id="word-meaning"></div>
       </div>
 
