@@ -37,12 +37,10 @@
 
       <!-- Luyện theo danh mục -->
       <div id="category-section" style="display: none; margin-top: var(--space-lg);">
-        <label class="form-label">Chọn danh mục:</label>
-        <select class="form-input" id="category-select" style="margin-bottom: var(--space-sm);">
-          <option value="">-- Chọn danh mục --</option>
-        </select>
+        <label class="form-label">Chọn danh mục (chọn nhiều):</label>
+        <div id="category-checkboxes" class="writing__category-list"></div>
         <button class="btn btn--primary btn--lg btn--block" id="btn-start-category"
-                onclick="WritingApp.start('category', document.getElementById('category-select').value)">
+                onclick="WritingApp.start('category', WritingApp.getSelectedCategories())">
           Luyện theo danh mục
         </button>
       </div>
@@ -77,6 +75,7 @@
           Xem pinyin
         </button>
         <div class="flashcard__meaning" id="word-meaning"></div>
+        <div class="writing__example" id="word-example" style="display: none;"></div>
       </div>
 
       <!-- Canvas vẽ tay -->
@@ -153,12 +152,12 @@
         var categories = catRes.categories || [];
         if (categories.length > 0) {
           document.getElementById('category-section').style.display = 'block';
-          var select = document.getElementById('category-select');
+          var container = document.getElementById('category-checkboxes');
           categories.forEach(function(cat) {
-            var opt = document.createElement('option');
-            opt.value = cat;
-            opt.textContent = cat;
-            select.appendChild(opt);
+            var label = document.createElement('label');
+            label.className = 'writing__category-item';
+            label.innerHTML = '<input type="checkbox" value="' + cat.replace(/"/g, '&quot;') + '"> ' + cat;
+            container.appendChild(label);
           });
         }
       } catch (err) {

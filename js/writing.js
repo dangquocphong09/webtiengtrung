@@ -11,16 +11,34 @@ const WritingApp = {
   pinyinHidden: true,
   signaturePad: null,
 
+  // ── Lấy danh mục được chọn ──
+
+  getSelectedCategories() {
+    var checkboxes = document.querySelectorAll('#category-checkboxes input[type="checkbox"]:checked');
+    var cats = [];
+    checkboxes.forEach(function(cb) { cats.push(cb.value); });
+    if (cats.length === 0) {
+      showToast('Vui lòng chọn ít nhất 1 danh mục', 'info');
+      return [];
+    }
+    return cats;
+  },
+
   // ── Bắt đầu phiên luyện viết ──
 
-  async start(mode, category) {
+  async start(mode, categories) {
     showLoading();
     try {
       var res;
       if (mode === 'daily') {
         res = await API.getReviewWords();
-      } else if (mode === 'category' && category) {
-        res = await API.getReviewWordsByCategory(category);
+      } else if (mode === 'category' && categories && categories.length > 0) {
+        // Lấy tất cả từ rồi lọc theo danh mục được chọn
+        res = await API.getWords();
+        var allWords = res.words || [];
+        var catSet = {};
+        categories.forEach(function(c) { catSet[c] = true; });
+        res = { words: allWords.filter(function(w) { return catSet[w.category]; }) };
       } else {
         res = await API.getWords();
       }
@@ -136,11 +154,27 @@ const WritingApp = {
     document.getElementById('word-pinyin').textContent = word.pinyin;
     document.getElementById('word-meaning').textContent = word.meaning;
 
-    // Reset state - mặc định ẩn cả hanzi và pinyin
+    // Câu ví dụ
+    var exEl = document.getElementById('word-example');
+    if (word.example) {
+      var exHtml = '<div class="writing__example-hanzi">' + word.example + '</div>';
+      if (word.examplePinyin) {
+        exHtml += '<div class="writing__example-pinyin">' + word.examplePinyin + '</div>';
+      }
+      if (word.exampleMeaning) {
+        exHtml += '<div class="writing__example-meaning">' + word.exampleMeaning + '</div>';
+      }
+      exEl.innerHTML = exHtml;
+    } else {
+      exEl.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.875rem;">Không có ví dụ</span>';
+    }
+
+    // Reset state - mặc định ẩn cả hanzi, pinyin và ví dụ
     this.hanziHidden = true;
     this.pinyinHidden = true;
     document.getElementById('reference-hanzi').style.visibility = 'hidden';
     document.getElementById('word-pinyin').style.visibility = 'hidden';
+    exEl.style.display = 'none';
     document.getElementById('btn-toggle-hanzi').textContent = 'Xem hanzi';
     document.getElementById('btn-toggle-pinyin').textContent = 'Xem pinyin';
 
@@ -207,19 +241,22 @@ const WritingApp = {
     }
   },
 
-  // ── Ẩn/hiện pinyin ──
+  // ── Ẩn/hiện pinyin + câu ví dụ ──
 
   togglePinyin() {
     var el = document.getElementById('word-pinyin');
+    var ex = document.getElementById('word-example');
     var btn = document.getElementById('btn-toggle-pinyin');
 
     this.pinyinHidden = !this.pinyinHidden;
 
     if (this.pinyinHidden) {
       el.style.visibility = 'hidden';
+      ex.style.display = 'none';
       btn.textContent = 'Xem pinyin';
     } else {
       el.style.visibility = 'visible';
+      ex.style.display = 'block';
       btn.textContent = 'Ẩn pinyin';
     }
   },

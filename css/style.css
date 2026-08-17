@@ -882,6 +882,62 @@ textarea.form-input {
   display: inline-block;
 }
 
+.writing__category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.writing__category-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.writing__category-item:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.writing__category-item input[type="checkbox"] {
+  display: none;
+}
+
+.writing__example {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+  text-align: left;
+  width: 100%;
+}
+
+.writing__example-hanzi {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.writing__example-pinyin {
+  font-size: 0.875rem;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+
+.writing__example-meaning {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 480px) {
