@@ -841,6 +841,13 @@ textarea.form-input {
   margin-bottom: var(--space-sm);
 }
 
+.writing__toggles {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
 .writing__reference-hanzi {
   font-size: 4rem;
   font-weight: 700;
@@ -960,7 +967,26 @@ textarea.form-input {
   }
 
   .header__title {
-    font-size: 1rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .header__nav {
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .header__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .header__nav a {
+    font-size: 0.6875rem;
+    padding: 3px 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .btn--lg {
@@ -988,5 +1014,59 @@ textarea.form-input {
   .word-detail__example {
     flex-direction: column;
     gap: 2px;
+  }
+
+  /* ── Writing responsive ── */
+
+  .writing__reference-hanzi {
+    font-size: 3rem;
+  }
+
+  .writing__canvas-wrap {
+    padding: var(--space-sm);
+  }
+
+  .writing__reference {
+    margin-bottom: var(--space-xs);
+  }
+
+  .writing__toggles {
+    gap: var(--space-xs);
+  }
+
+  .writing__controls {
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+  }
+
+  .writing__controls .btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9375rem;
+  }
+
+  .flashcard__meaning {
+    font-size: 1rem;
+  }
+
+  .writing__example {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+  }
+
+  .writing__example-hanzi {
+    font-size: 1rem;
+  }
+
+  .writing__category-list {
+    gap: var(--space-xs);
+  }
+
+  .writing__category-item {
+    font-size: 0.8125rem;
+    padding: 3px 10px;
+  }
+
+  .flashcard__pinyin {
+    font-size: 1.25rem;
   }
 }

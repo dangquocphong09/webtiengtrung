@@ -95,7 +95,8 @@ const WritingApp = {
 
   resizeCanvas(canvas) {
     var wrap = canvas.parentElement;
-    var size = Math.min(wrap.clientWidth, 280);
+    var maxWidth = window.innerWidth <= 480 ? 320 : 280;
+    var size = Math.min(wrap.clientWidth - 16, maxWidth);
     var ratio = Math.max(window.devicePixelRatio || 1, 1);
 
     canvas.width = size * ratio;
