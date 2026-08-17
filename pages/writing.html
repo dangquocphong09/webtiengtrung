@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Luyện viết - Từ Vựng Tiếng Trung</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__inner">
+        <a href="../index.html" class="header__title">Từ Vựng Tiếng Trung</a>
+      <nav class="header__nav">
+        <a href="../index.html">Trang chủ</a>
+        <a href="add-word.html">Thêm từ</a>
+        <a href="vocabulary.html">Kho từ</a>
+        <a href="review.html">Ôn tập</a>
+        <a href="writing.html" class="active">Luyện viết</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Chọn chế độ luyện viết -->
+    <div id="mode-select" class="card">
+      <h2 style="margin-bottom: var(--space-lg); font-size: 1.125rem;">Chọn chế độ luyện viết</h2>
+      <div class="actions">
+        <button class="btn btn--primary btn--lg btn--block" onclick="WritingApp.start('daily')">
+          Luyện từ hôm nay <span id="due-badge" class="level-badge" style="margin-left: 8px;"></span>
+        </button>
+        <button class="btn btn--outline btn--lg btn--block" onclick="WritingApp.start('random')">
+          Luyện ngẫu nhiên
+        </button>
+      </div>
+
+      <!-- Luyện theo danh mục -->
+      <div id="category-section" style="display: none; margin-top: var(--space-lg);">
+        <label class="form-label">Chọn danh mục:</label>
+        <select class="form-input" id="category-select" style="margin-bottom: var(--space-sm);">
+          <option value="">-- Chọn danh mục --</option>
+        </select>
+        <button class="btn btn--primary btn--lg btn--block" id="btn-start-category"
+                onclick="WritingApp.start('category', document.getElementById('category-select').value)">
+          Luyện theo danh mục
+        </button>
+      </div>
+    </div>
+
+    <!-- Khu vực luyện viết -->
+    <div id="writing-area" style="display: none;">
+
+      <!-- Progress -->
+      <div class="progress">
+        <div class="progress__text">
+          <span id="progress-label">1 / 10</span>
+          <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress__bar">
+          <div class="progress__fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Thông tin từ -->
+      <div class="card" id="word-info" style="text-align: center;">
+        <div class="writing__reference">
+          <div class="writing__reference-hanzi" id="reference-hanzi"></div>
+          <div id="reference-toggle">
+            <button class="btn btn--outline btn--sm" id="btn-toggle-hanzi" onclick="WritingApp.toggleAnswer()">
+              Ẩn đáp án
+            </button>
+          </div>
+        </div>
+        <div class="flashcard__pinyin" id="word-pinyin"></div>
+        <div class="flashcard__meaning" id="word-meaning"></div>
+      </div>
+
+      <!-- Canvas vẽ tay -->
+      <div class="card writing__canvas-wrap">
+        <canvas id="writing-canvas" class="writing__canvas"></canvas>
+      </div>
+
+      <!-- Nút điều khiển -->
+      <div class="writing__controls">
+        <button class="btn btn--outline btn--lg" onclick="WritingApp.clearCanvas()">
+          Xóa
+        </button>
+        <button class="btn btn--primary btn--lg" onclick="WritingApp.nextWord()">
+          Tiếp theo
+        </button>
+      </div>
+
+      <!-- Đã luyện xong từ này -->
+      <div style="text-align: center; margin-top: var(--space-md);">
+        <span class="writing__practice-count" id="practice-count"></span>
+      </div>
+    </div>
+
+    <!-- Hoàn thành -->
+    <div id="writing-done" style="display: none;">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: var(--space-md);">&#9997;&#65039;</div>
+        <h2 style="margin-bottom: var(--space-lg);">Hoàn thành!</h2>
+
+        <div class="stats" style="margin-bottom: var(--space-lg);">
+          <div class="stat-card">
+            <div class="stat-card__number" id="stat-total">0</div>
+            <div class="stat-card__label">Từ đã luyện</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__number" id="stat-practiced">0</div>
+            <div class="stat-card__label">Lượt luyện viết</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary btn--lg btn--block" onclick="WritingApp.start('random')">
+            Luyện tiếp
+          </button>
+          <button class="btn btn--outline btn--lg btn--block" onclick="WritingApp.goHome()">
+            Quay về trang chủ
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toast-container"></div>
+  <div id="loading" class="loading"><div class="loading__spinner"></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/writing.js"></script>
+  <script>
+    async function initPage() {
+      try {
+        var [reviewRes, catRes] = await Promise.all([
+          API.getReviewWords(),
+          API.getCategories(),
+        ]);
+
+        var dueCount = (reviewRes.words || []).length;
+        var badge = document.getElementById('due-badge');
+        if (dueCount > 0) badge.textContent = dueCount;
+
+        var categories = catRes.categories || [];
+        if (categories.length > 0) {
+          document.getElementById('category-section').style.display = 'block';
+          var select = document.getElementById('category-select');
+          categories.forEach(function(cat) {
+            var opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            select.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    initPage();
+  </script>
+
+</body>
+</html>

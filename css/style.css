@@ -835,6 +835,53 @@ textarea.form-input {
 .result-label--correct { color: var(--success); }
 .result-label--wrong { color: var(--danger); }
 
+/* ── Writing Practice ── */
+
+.writing__reference {
+  margin-bottom: var(--space-sm);
+}
+
+.writing__reference-hanzi {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  transition: visibility 0.2s;
+}
+
+.writing__canvas-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+
+.writing__canvas {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.writing__controls {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.writing__controls .btn {
+  flex: 1;
+}
+
+.writing__practice-count {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  background: var(--primary-light);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 999px;
+  display: inline-block;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 480px) {

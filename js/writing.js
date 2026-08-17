@@ -1,0 +1,256 @@
+/**
+ * WritingApp - Luyện viết tay chữ Hán
+ * Sử dụng Signature_Pad để vẽ trên canvas
+ */
+
+const WritingApp = {
+  words: [],
+  currentIndex: 0,
+  practiceCount: 0,
+  answerHidden: false,
+  signaturePad: null,
+
+  // ── Bắt đầu phiên luyện viết ──
+
+  async start(mode, category) {
+    showLoading();
+    try {
+      var res;
+      if (mode === 'daily') {
+        res = await API.getReviewWords();
+      } else if (mode === 'category' && category) {
+        res = await API.getReviewWordsByCategory(category);
+      } else {
+        res = await API.getWords();
+      }
+
+      var words = res.words || [];
+      if (words.length === 0) {
+        showToast('Không có từ để luyện', 'info');
+        hideLoading();
+        return;
+      }
+
+      // Xáo trộn cho chế độ random
+      if (mode === 'random' || mode === 'daily') {
+        words = this.shuffle(words);
+      }
+
+      this.words = words;
+      this.currentIndex = 0;
+      this.practiceCount = 0;
+      this.answerHidden = false;
+
+      // Ẩn mode select, hiện writing area
+      document.getElementById('mode-select').style.display = 'none';
+      document.getElementById('writing-done').style.display = 'none';
+      document.getElementById('writing-area').style.display = 'block';
+
+      this.initCanvas();
+      this.showWord();
+    } catch (err) {
+      showToast('Không thể tải dữ liệu', 'error');
+      console.error(err);
+    } finally {
+      hideLoading();
+    }
+  },
+
+  // ── Khởi tạo Canvas + SignaturePad ──
+
+  initCanvas() {
+    var canvas = document.getElementById('writing-canvas');
+
+    // Responsive: đặt kích thước canvas theo container
+    this.resizeCanvas(canvas);
+    window.addEventListener('resize', () => this.resizeCanvas(canvas));
+
+    this.signaturePad = new SignaturePad(canvas, {
+      backgroundColor: 'rgba(255, 255, 255, 0)',
+      penColor: '#1E293B',
+      minWidth: 2,
+      maxWidth: 4,
+    });
+  },
+
+  resizeCanvas(canvas) {
+    var wrap = canvas.parentElement;
+    var size = Math.min(wrap.clientWidth, 280);
+    var ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+    canvas.width = size * ratio;
+    canvas.height = size * ratio;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+
+    var ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+
+    // Vẽ đường kẻ ô vuông trợ giúp
+    this.drawGrid(ctx, size);
+  },
+
+  drawGrid(ctx, size) {
+    ctx.save();
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+
+    // Đường chéo
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(size, size);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(size, 0);
+    ctx.lineTo(0, size);
+    ctx.stroke();
+
+    // Đường giữa ngang + dọc
+    ctx.beginPath();
+    ctx.moveTo(0, size / 2);
+    ctx.lineTo(size, size / 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(size / 2, 0);
+    ctx.lineTo(size / 2, size);
+    ctx.stroke();
+
+    ctx.restore();
+  },
+
+  // ── Hiển thị từ hiện tại ──
+
+  showWord() {
+    var word = this.words[this.currentIndex];
+    if (!word) {
+      this.showDone();
+      return;
+    }
+
+    document.getElementById('reference-hanzi').textContent = word.hanzi;
+    document.getElementById('word-pinyin').textContent = word.pinyin;
+    document.getElementById('word-meaning').textContent = word.meaning;
+
+    // Reset state
+    this.answerHidden = false;
+    document.getElementById('reference-hanzi').style.visibility = 'visible';
+    document.getElementById('btn-toggle-hanzi').textContent = 'Ẩn đáp án';
+
+    this.clearCanvas();
+    this.updateProgress();
+    this.updatePracticeCount(word);
+  },
+
+  // ── Cập nhật tiến trình ──
+
+  updateProgress() {
+    var total = this.words.length;
+    var current = this.currentIndex + 1;
+    var percent = Math.round((this.currentIndex / total) * 100);
+
+    document.getElementById('progress-label').textContent = current + ' / ' + total;
+    document.getElementById('progress-percent').textContent = percent + '%';
+    document.getElementById('progress-fill').style.width = percent + '%';
+  },
+
+  // ── Đếm số lần luyện ──
+
+  updatePracticeCount(word) {
+    var counts = this.getPracticeCounts();
+    var count = counts[word.id] || 0;
+    var el = document.getElementById('practice-count');
+    if (count > 0) {
+      el.textContent = 'Đã luyện ' + count + ' lần';
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  },
+
+  getPracticeCounts() {
+    try {
+      return JSON.parse(localStorage.getItem('writingPracticeCounts') || '{}');
+    } catch (e) {
+      return {};
+    }
+  },
+
+  savePracticeCount(wordId) {
+    var counts = this.getPracticeCounts();
+    counts[wordId] = (counts[wordId] || 0) + 1;
+    localStorage.setItem('writingPracticeCounts', JSON.stringify(counts));
+    return counts[wordId];
+  },
+
+  // ── Ẩn/hiện đáp án ──
+
+  toggleAnswer() {
+    var el = document.getElementById('reference-hanzi');
+    var btn = document.getElementById('btn-toggle-hanzi');
+
+    this.answerHidden = !this.answerHidden;
+
+    if (this.answerHidden) {
+      el.style.visibility = 'hidden';
+      btn.textContent = 'Xem đáp án';
+    } else {
+      el.style.visibility = 'visible';
+      btn.textContent = 'Ẩn đáp án';
+    }
+  },
+
+  // ── Xóa canvas ──
+
+  clearCanvas() {
+    if (this.signaturePad) {
+      this.signaturePad.clear();
+    }
+  },
+
+  // ── Từ tiếp theo ──
+
+  nextWord() {
+    var word = this.words[this.currentIndex];
+
+    // Kiểm tra đã vẽ chưa
+    if (this.signaturePad && !this.signaturePad.isEmpty()) {
+      this.savePracticeCount(word.id);
+      this.practiceCount++;
+    }
+
+    this.currentIndex++;
+    this.showWord();
+  },
+
+  // ── Hoàn thành ──
+
+  showDone() {
+    document.getElementById('writing-area').style.display = 'none';
+    document.getElementById('writing-done').style.display = 'block';
+
+    document.getElementById('stat-total').textContent = this.words.length;
+    document.getElementById('stat-practiced').textContent = this.practiceCount;
+  },
+
+  // ── Quay về trang chủ ──
+
+  goHome() {
+    window.location.href = '../index.html';
+  },
+
+  // ── Shuffle array ──
+
+  shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
+    }
+    return a;
+  },
+};
