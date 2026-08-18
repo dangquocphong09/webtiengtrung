@@ -81,21 +81,23 @@ const WritingApp = {
   initCanvas() {
     var canvas = document.getElementById('writing-canvas');
 
-    // Responsive: đặt kích thước canvas theo container
     this.resizeCanvas(canvas);
     window.addEventListener('resize', () => this.resizeCanvas(canvas));
 
     this.signaturePad = new SignaturePad(canvas, {
       backgroundColor: 'rgba(255, 255, 255, 0)',
       penColor: '#1E293B',
-      minWidth: 2,
-      maxWidth: 4,
+      minWidth: 1,
+      maxWidth: 2.5,
+      velocityFilterWeight: 0.6,
+      dotSize: function() { return 1.5; },
     });
   },
 
   resizeCanvas(canvas) {
     var wrap = canvas.parentElement;
-    var maxWidth = window.innerWidth <= 480 ? 320 : 280;
+    var isMobile = window.innerWidth <= 480;
+    var maxWidth = isMobile ? 340 : 300;
     var size = Math.min(wrap.clientWidth - 16, maxWidth);
     var ratio = Math.max(window.devicePixelRatio || 1, 1);
 
@@ -107,17 +109,15 @@ const WritingApp = {
     var ctx = canvas.getContext('2d');
     ctx.scale(ratio, ratio);
 
-    // Vẽ đường kẻ ô vuông trợ giúp
     this.drawGrid(ctx, size);
   },
 
   drawGrid(ctx, size) {
     ctx.save();
-    ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = '#E8ECF0';
+    ctx.lineWidth = 0.5;
 
-    // Đường chéo
+    // Đường chéo nét liền nhẹ
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(size, size);
@@ -138,6 +138,12 @@ const WritingApp = {
     ctx.moveTo(size / 2, 0);
     ctx.lineTo(size / 2, size);
     ctx.stroke();
+
+    // Viền ngoài đậm hơn
+    ctx.strokeStyle = '#D1D5DB';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.strokeRect(0, 0, size, size);
 
     ctx.restore();
   },
