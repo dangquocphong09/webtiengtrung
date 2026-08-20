@@ -1,95 +1,100 @@
 /**
- * API - Lớp wrapper gọi REST API
+ * API - Lớp wrapper gọi Firestore
  *
- * Apps Script chỉ có 1 endpoint (/exec):
- *   - GET  → ?action=xxx&param=value
- *   - POST → body { action: "xxx", ...data }
+ * Dữ liệu lưu trong collection "words"
  */
 
 const API = {
-  /**
-   * GET request
-   */
-  async _get(action, params) {
-    var url = CONFIG.API_BASE_URL + '?action=' + encodeURIComponent(action);
-    if (params) {
-      Object.keys(params).forEach(function(k) {
-        if (params[k] !== undefined && params[k] !== null && params[k] !== '') {
-          url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-        }
-      });
-    }
 
-    try {
-      var res = await fetch(url);
-      return await res.json();
-    } catch (err) {
-      console.error('API GET ' + action + ':', err);
-      throw err;
-    }
-  },
-
-  /**
-   * POST request
-   */
-  async _post(action, data) {
-    try {
-      var res = await fetch(CONFIG.API_BASE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(Object.assign({ action: action }, data || {})),
-      });
-      return await res.json();
-    } catch (err) {
-      console.error('API POST ' + action + ':', err);
-      throw err;
-    }
-  },
-
-  // ── GET ──
+  // ── READ ──
 
   async getWords() {
-    return this._get('words');
+    var snap = await db.collection('words').orderBy('createdAt', 'desc').get();
+    var words = [];
+    snap.forEach(function(doc) {
+      words.push({ id: doc.id, ...doc.data() });
+    });
+    return { words: words };
   },
 
   async getReviewWords() {
-    return this._get('review');
+    var today = new Date().toISOString().split('T')[0];
+    var snap = await db.collection('words')
+      .where('nextReview', '<=', today)
+      .orderBy('nextReview', 'asc')
+      .get();
+    var words = [];
+    snap.forEach(function(doc) {
+      words.push({ id: doc.id, ...doc.data() });
+    });
+    return { words: words };
   },
 
   async getReviewWordsByCategory(category) {
-    return this._get('review', { category: category });
+    var today = new Date().toISOString().split('T')[0];
+    var snap = await db.collection('words')
+      .where('category', '==', category)
+      .where('nextReview', '<=', today)
+      .orderBy('nextReview', 'asc')
+      .get();
+    var words = [];
+    snap.forEach(function(doc) {
+      words.push({ id: doc.id, ...doc.data() });
+    });
+    return { words: words };
   },
 
   async getCategories() {
-    return this._get('categories');
+    var snap = await db.collection('words').get();
+    var catSet = {};
+    snap.forEach(function(doc) {
+      var cat = doc.data().category;
+      if (cat) catSet[cat] = true;
+    });
+    return { categories: Object.keys(catSet).sort() };
   },
 
-  // ── POST ──
+  // ── CREATE / UPDATE / DELETE ──
 
   async createWord(word) {
-    return this._post('createWord', { word: word });
+    var id = word.id || this._genId();
+    var data = Object.assign({}, word, { id: id });
+    await db.collection('words').doc(id).set(data);
+    return { success: true, id: id };
   },
 
   async updateWord(word) {
-    return this._post('updateWord', { word: word });
+    var id = word.id;
+    var data = Object.assign({}, word);
+    delete data.id;
+    await db.collection('words').doc(id).set(data, { merge: true });
+    return { success: true };
   },
 
   async deleteWord(id) {
-    return this._post('deleteWord', { id: id });
+    await db.collection('words').doc(id).delete();
+    return { success: true };
   },
 
   async toggleFavorite(id, favorite) {
-    return this._post('toggleFavorite', { id: id, favorite: favorite });
+    await db.collection('words').doc(id).update({ favorite: favorite });
+    return { success: true };
   },
 
   async updateReview(id, level, correctStreak, wrongCount, lastReview, nextReview) {
-    return this._post('updateReview', {
-      id: id,
+    await db.collection('words').doc(id).update({
       level: level,
       correctStreak: correctStreak,
       wrongCount: wrongCount,
       lastReview: lastReview,
       nextReview: nextReview,
     });
+    return { success: true };
+  },
+
+  // ── Helpers ──
+
+  _genId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
   },
 };

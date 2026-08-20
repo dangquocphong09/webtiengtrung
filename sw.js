@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tvtt-v1';
+const CACHE_NAME = 'tvtt-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './pages/writing.html',
   './css/style.css',
   './js/config.js',
+  './js/firebase-config.js',
   './js/utils.js',
   './js/api.js',
   './js/reviewService.js',

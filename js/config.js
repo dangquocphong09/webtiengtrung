@@ -1,10 +1,8 @@
 /**
- * Config - Cấu hình API và ứng dụng
+ * Config - Cấu hình ứng dụng
  */
 
 const CONFIG = {
-  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbztkR8nDVcauoqgMBhPJPuc3ySWlqohnLMq5otm7JpRTqxxLARBkRKRwaIlOOlRB-I7qQ/exec',
-
   // Level tối thiểu
   MIN_LEVEL: 0,
 
