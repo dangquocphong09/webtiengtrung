@@ -2,7 +2,6 @@ const CACHE_NAME = 'tvtt-v1';
 const ASSETS = [
   './',
   './index.html',
-  './pages/add-word.html',
   './pages/vocabulary.html',
   './pages/review.html',
   './pages/writing.html',
