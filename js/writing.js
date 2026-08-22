@@ -8,7 +8,6 @@ const WritingApp = {
   currentIndex: 0,
   practiceCount: 0,
   hanziHidden: true,
-  pinyinHidden: true,
   signaturePad: null,
 
   // ── Lấy danh mục được chọn ──
@@ -59,7 +58,6 @@ const WritingApp = {
       this.currentIndex = 0;
       this.practiceCount = 0;
       this.hanziHidden = true;
-      this.pinyinHidden = true;
 
       // Ẩn mode select, hiện writing area
       document.getElementById('mode-select').style.display = 'none';
@@ -161,29 +159,10 @@ const WritingApp = {
     document.getElementById('word-pinyin').textContent = word.pinyin;
     document.getElementById('word-meaning').textContent = word.meaning;
 
-    // Câu ví dụ
-    var exEl = document.getElementById('word-example');
-    if (word.example) {
-      var exHtml = '<div class="writing__example-hanzi">' + word.example + '</div>';
-      if (word.examplePinyin) {
-        exHtml += '<div class="writing__example-pinyin">' + word.examplePinyin + '</div>';
-      }
-      if (word.exampleMeaning) {
-        exHtml += '<div class="writing__example-meaning">' + word.exampleMeaning + '</div>';
-      }
-      exEl.innerHTML = exHtml;
-    } else {
-      exEl.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.875rem;">Không có ví dụ</span>';
-    }
-
-    // Reset state - mặc định ẩn cả hanzi, pinyin và ví dụ
+    // Reset state - hanzi ẩn, pinyin hiện
     this.hanziHidden = true;
-    this.pinyinHidden = true;
     document.getElementById('reference-hanzi').style.visibility = 'hidden';
-    document.getElementById('word-pinyin').style.visibility = 'hidden';
-    exEl.style.display = 'none';
     document.getElementById('btn-toggle-hanzi').textContent = 'Xem hanzi';
-    document.getElementById('btn-toggle-pinyin').textContent = 'Xem pinyin';
 
     this.clearCanvas();
     this.updateProgress();
@@ -245,26 +224,6 @@ const WritingApp = {
     } else {
       el.style.visibility = 'visible';
       btn.textContent = 'Ẩn hanzi';
-    }
-  },
-
-  // ── Ẩn/hiện pinyin + câu ví dụ ──
-
-  togglePinyin() {
-    var el = document.getElementById('word-pinyin');
-    var ex = document.getElementById('word-example');
-    var btn = document.getElementById('btn-toggle-pinyin');
-
-    this.pinyinHidden = !this.pinyinHidden;
-
-    if (this.pinyinHidden) {
-      el.style.visibility = 'hidden';
-      ex.style.display = 'none';
-      btn.textContent = 'Xem pinyin';
-    } else {
-      el.style.visibility = 'visible';
-      ex.style.display = 'block';
-      btn.textContent = 'Ẩn pinyin';
     }
   },
 

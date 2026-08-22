@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import từ vựng - Từ Vựng Tiếng Trung</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#3B82F6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TVTT">
+  <link rel="apple-touch-icon" href="../icons/icon-192.png">
+  <style>
+    .import-drop {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-xl);
+      text-align: center;
+      color: var(--text-secondary);
+      transition: border-color 0.15s, background 0.15s;
+      cursor: pointer;
+    }
+    .import-drop.dragover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .import-drop input[type="file"] { display: none; }
+    .import-drop__icon { font-size: 2rem; margin-bottom: var(--space-sm); }
+    .import-drop__text { font-size: 0.875rem; }
+    .import-format {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: var(--bg);
+      padding: var(--space-sm);
+      border-radius: var(--radius-sm);
+      margin-top: var(--space-md);
+      text-align: left;
+      line-height: 1.6;
+    }
+    .import-format code {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 0.6875rem;
+    }
+    .import-result {
+      margin-top: var(--space-md);
+      font-size: 0.875rem;
+    }
+    .import-result__item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .import-result__ok { color: var(--success); }
+    .import-result__fail { color: var(--danger); }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__inner">
+      <a href="../index.html" class="header__title">Từ Vựng Tiếng Trung</a>
+      <nav class="header__nav">
+        <a href="../index.html">Trang chủ</a>
+        <a href="vocabulary.html">Kho từ</a>
+        <a href="review.html">Ôn tập</a>
+        <a href="writing.html">Luyện viết</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="card">
+      <h2 style="margin-bottom: var(--space-md); font-size: 1.125rem;">Import từ vựng</h2>
+
+      <!-- Kéo thả file -->
+      <div class="import-drop" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="import-drop__icon">&#128206;</div>
+        <div class="import-drop__text">Chọn file hoặc kéo thả vào đây</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">Hỗ trợ .txt, .csv</div>
+        <input type="file" id="file-input" accept=".txt,.csv">
+      </div>
+
+      <div class="import-format">
+        <strong>Định dạng mỗi dòng:</strong><br>
+        <code>hán tự|pinyin|nghĩa|danh mục</code><br><br>
+        <strong>Ví dụ:</strong><br>
+        <code>你好|nǐ hǎo|xin chào|Cơ bản</code><br>
+        <code>谢谢|xièxie|cảm ơn|Lịch sự</code><br><br>
+        Danh mục không bắt buộc. Nếu bỏ trống sẽ import mà không có danh mục.
+      </div>
+    </div>
+
+    <!-- Hoặc dán text -->
+    <div class="card">
+      <h3 style="margin-bottom: var(--space-sm); font-size: 1rem;">Hoặc dán text trực tiếp</h3>
+      <textarea class="form-input" id="text-input" rows="6" placeholder="你好|nǐ hǎo|xin chào|Cơ bản&#10;谢谢|xièxie|cảm ơn|Lịch sự&#10;..."></textarea>
+      <button class="btn btn--primary btn--block" style="margin-top: var(--space-sm);" onclick="ImportApp.importText()">
+        Import từ text
+      </button>
+    </div>
+
+    <!-- Kết quả -->
+    <div id="result-area" style="display: none;">
+      <div class="card">
+        <h3 style="margin-bottom: var(--space-sm); font-size: 1rem;">Kết quả</h3>
+        <div class="stats" style="margin-bottom: var(--space-md);">
+          <div class="stat-card">
+            <div class="stat-card__number import-result__ok" id="result-ok">0</div>
+            <div class="stat-card__label">Thành công</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__number import-result__fail" id="result-fail">0</div>
+            <div class="stat-card__label">Thất bại</div>
+          </div>
+        </div>
+        <div id="result-log" style="max-height: 200px; overflow-y: auto; font-size: 0.75rem; color: var(--text-secondary);"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toast-container"></div>
+  <div id="loading" class="loading"><div class="loading__spinner"></div></div>
+
+  <nav class="bottom-nav">
+    <a href="../index.html"><span class="bottom-nav__icon">&#127968;</span>Trang chủ</a>
+    <a href="review.html"><span class="bottom-nav__icon">&#128218;</span>Ôn tập</a>
+    <a href="writing.html"><span class="bottom-nav__icon">&#9997;&#65039;</span>Luyện viết</a>
+    <a href="vocabulary.html"><span class="bottom-nav__icon">&#128214;</span>Kho từ</a>
+  </nav>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    var ImportApp = {
+      async importWords(lines) {
+        var ok = 0, fail = 0;
+        var logEl = document.getElementById('result-log');
+        logEl.innerHTML = '';
+        document.getElementById('result-area').style.display = 'block';
+
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (!line) continue;
+
+          var parts = line.split('|');
+          if (parts.length < 3) {
+            fail++;
+            logEl.innerHTML += '<div class="import-result__fail">✗ Dòng ' + (i + 1) + ': định dạng sai (cần ít nhất hán tự|pinyin|nghĩa)</div>';
+            continue;
+          }
+
+          var word = {
+            hanzi: parts[0].trim(),
+            pinyin: parts[1].trim(),
+            meaning: parts[2].trim(),
+            category: (parts[3] || '').trim(),
+            example: '',
+            examplePinyin: '',
+            exampleMeaning: '',
+            favorite: false,
+            level: 0,
+            correctStreak: 0,
+            wrongCount: 0,
+            lastReview: '',
+            nextReview: '',
+            createdAt: new Date().toISOString(),
+          };
+
+          try {
+            await API.createWord(word);
+            ok++;
+            logEl.innerHTML += '<div class="import-result__ok">✓ [' + (i + 1) + '] ' + word.hanzi + ' - ' + word.pinyin + '</div>';
+          } catch (err) {
+            fail++;
+            logEl.innerHTML += '<div class="import-result__fail">✗ [' + (i + 1) + '] ' + word.hanzi + ' - ' + err.message + '</div>';
+          }
+        }
+
+        document.getElementById('result-ok').textContent = ok;
+        document.getElementById('result-fail').textContent = fail;
+        showToast('Import xong: ' + ok + ' thành công, ' + fail + ' thất bại', ok > 0 ? 'success' : 'error');
+      },
+
+      importText() {
+        var text = document.getElementById('text-input').value;
+        if (!text.trim()) {
+          showToast('Chưa nhập text', 'info');
+          return;
+        }
+        var lines = text.split('\n');
+        this.importWords(lines);
+      },
+
+      importFile(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var text = e.target.result;
+          var lines = text.split(/\r?\n/);
+          ImportApp.importWords(lines);
+        };
+        reader.readAsText(file);
+      },
+    };
+
+    // Drag & Drop
+    var dropZone = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('file-input');
+
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', function() {
+      dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        ImportApp.importFile(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput.addEventListener('change', function(e) {
+      if (e.target.files.length > 0) {
+        ImportApp.importFile(e.target.files[0]);
+      }
+    });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('../sw.js');
+    }
+  </script>
+
+</body>
+</html>

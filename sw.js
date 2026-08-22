@@ -5,6 +5,7 @@ const ASSETS = [
   './pages/vocabulary.html',
   './pages/review.html',
   './pages/writing.html',
+  './pages/import.html',
   './css/style.css',
   './js/config.js',
   './js/firebase-config.js',
